@@ -5,15 +5,5 @@
   },
   "functions": {
     "directory": "functions"
-  },
-  "routes": [
-    {
-      "pattern": "/api/extract",
-      "function": "extract"
-    },
-    {
-      "pattern": "/api/optimize",
-      "function": "optimize"
-    }
-  ]
+  }
 }
