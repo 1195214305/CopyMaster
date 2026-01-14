@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "assets": {
+    "directory": "frontend/dist"
+  },
+  "functions": {
+    "directory": "functions"
+  },
+  "routes": [
+    {
+      "pattern": "/api/extract",
+      "function": "api/extract"
+    },
+    {
+      "pattern": "/api/optimize",
+      "function": "api/optimize"
+    }
+  ]
+}

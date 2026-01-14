@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff88;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00cc6a;
+}
+
+/* 选中文本样式 */
+::selection {
+  background: rgba(0, 255, 136, 0.3);
+  color: #fff;
+}
+
+/* 输入框聚焦样式 */
+input:focus, textarea:focus {
+  outline: none;
+}
+
+/* 动画背景网格 */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* 扫描线效果 */
+.scanline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+  animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { top: 100%; opacity: 1; }
+}
+
+/* 霓虹发光效果 */
+.neon-text {
+  text-shadow:
+    0 0 5px #00ff88,
+    0 0 10px #00ff88,
+    0 0 20px #00ff88;
+}
+
+.neon-border {
+  box-shadow:
+    0 0 5px rgba(0, 255, 136, 0.5),
+    inset 0 0 5px rgba(0, 255, 136, 0.1);
+}
+
+/* 打字机光标效果 */
+.typing-cursor::after {
+  content: '|';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* 平台图标悬停效果 */
+.platform-icon {
+  transition: all 0.3s ease;
+}
+
+.platform-icon:hover {
+  transform: translateY(-5px);
+  filter: drop-shadow(0 5px 15px currentColor);
+}
