@@ -1,20 +1,10 @@
-interface Env {
-  KV_NAMESPACE?: KVNamespace
-}
-
-interface OptimizeRequest {
-  content: string
-  apiKey: string
-  style?: 'formal' | 'casual' | 'marketing' | 'summary'
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
-export async function onRequest(context: { request: Request; env: Env }): Promise<Response> {
+export async function onRequest(context) {
   const { request } = context
 
   if (request.method === 'OPTIONS') {
@@ -29,7 +19,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
   }
 
   try {
-    const body: OptimizeRequest = await request.json()
+    const body = await request.json()
     const { content, apiKey, style = 'formal' } = body
 
     if (!content || !apiKey) {
@@ -39,8 +29,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       })
     }
 
-    // 根据风格选择提示词
-    const stylePrompts: Record<string, string> = {
+    const stylePrompts = {
       formal: '请将以下文案优化为正式、专业的风格，保持原意但使表达更加规范、清晰：',
       casual: '请将以下文案优化为轻松、口语化的风格，让内容更加亲切易读：',
       marketing: '请将以下文案优化为营销推广风格，突出亮点，增加吸引力和感染力：',
@@ -92,5 +81,3 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
     })
   }
 }
-
-export default { onRequest }

@@ -9,11 +9,11 @@
   "routes": [
     {
       "pattern": "/api/extract",
-      "function": "api/extract/index"
+      "function": "extract"
     },
     {
       "pattern": "/api/optimize",
-      "function": "api/optimize/index"
+      "function": "optimize"
     }
   ]
 }
