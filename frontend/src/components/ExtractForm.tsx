@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store'
 import { detectPlatform, getPlatformInfo, generateId } from '../utils'
+import { extractBvid, fetchBilibiliInfo, getOtherPlatformInfo, generateSummary } from '../utils/api'
 
 export default function ExtractForm() {
   const [url, setUrl] = useState('')
@@ -28,33 +29,43 @@ export default function ExtractForm() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: url.trim(),
-          platform: detectedPlatform,
-          apiKey: apiKey || undefined,
-        }),
-      })
+      let videoInfo: { title: string; author: string; content: string }
 
-      const data = await response.json()
+      if (detectedPlatform === 'bilibili') {
+        // B站视频提取
+        const bvid = extractBvid(url.trim())
+        if (!bvid) {
+          throw new Error('无法解析B站视频链接，请确保链接包含BV号')
+        }
+        videoInfo = await fetchBilibiliInfo(bvid)
+      } else {
+        // 其他平台返回提示信息
+        videoInfo = getOtherPlatformInfo(detectedPlatform, url.trim())
+      }
 
-      if (!response.ok) {
-        throw new Error(data.error || '提取失败')
+      // 如果有API Key，生成AI摘要
+      let summary = ''
+      let keywords: string[] = []
+
+      if (apiKey && videoInfo.content.length > 30) {
+        try {
+          const aiResult = await generateSummary(videoInfo.content, apiKey)
+          summary = aiResult.summary
+          keywords = aiResult.keywords
+        } catch (e) {
+          console.log('AI摘要生成失败')
+        }
       }
 
       const result = {
         id: generateId(),
         platform: detectedPlatform,
         url: url.trim(),
-        title: data.title || '未知标题',
-        author: data.author || '未知作者',
-        content: data.content || '',
-        summary: data.summary,
-        keywords: data.keywords,
+        title: videoInfo.title || '未知标题',
+        author: videoInfo.author || '未知作者',
+        content: videoInfo.content || '',
+        summary,
+        keywords,
         timestamp: Date.now(),
       }
 

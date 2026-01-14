@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store'
 import { getPlatformInfo, copyToClipboard, downloadAsFile } from '../utils'
+import { optimizeContent } from '../utils/api'
 
 export default function ResultPanel() {
   const { currentResult, setCurrentResult, apiKey } = useStore()
@@ -49,23 +50,13 @@ ${optimizedContent ? `\n---AI优化版本---\n\n${optimizedContent}` : ''}
 
     setOptimizing(true)
     try {
-      const response = await fetch('/api/optimize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: currentResult.content,
-          apiKey,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.optimized) {
-        setOptimizedContent(data.optimized)
+      const optimized = await optimizeContent(currentResult.content, apiKey, 'formal')
+      if (optimized) {
+        setOptimizedContent(optimized)
       }
     } catch (err) {
       console.error('优化失败:', err)
+      alert('优化失败，请检查API Key是否正确')
     } finally {
       setOptimizing(false)
     }
