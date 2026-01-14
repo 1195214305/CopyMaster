@@ -1,5 +1,6 @@
 import Header from './components/Header'
 import ExtractForm from './components/ExtractForm'
+import FileUpload from './components/FileUpload'
 import ResultPanel from './components/ResultPanel'
 import History from './components/History'
 import Settings from './components/Settings'
@@ -37,6 +38,7 @@ export default function App() {
       <main className="relative z-10">
         <Header />
         <ExtractForm />
+        <FileUpload />
         <ResultPanel />
         <History />
         <Footer />
