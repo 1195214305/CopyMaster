@@ -57,24 +57,35 @@ export async function getBilibiliAudioUrl(bvid: string, cid: number): Promise<st
 
 // 通过代理下载音频（返回Blob）
 export async function downloadAudioViaProxy(audioUrl: string): Promise<Blob> {
-  // 使用多个CORS代理尝试
+  // 尝试多个CORS代理
   const proxies = [
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(audioUrl)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(audioUrl)}`,
     `https://corsproxy.io/?${encodeURIComponent(audioUrl)}`,
+    `https://proxy.cors.sh/${audioUrl}`,
   ]
 
   for (const proxyUrl of proxies) {
     try {
-      const response = await fetch(proxyUrl)
+      console.log('尝试代理:', proxyUrl.substring(0, 50))
+      const response = await fetch(proxyUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        }
+      })
       if (response.ok) {
-        return await response.blob()
+        const blob = await response.blob()
+        if (blob.size > 1000) { // 确保不是错误页面
+          console.log('下载成功，大小:', blob.size)
+          return blob
+        }
       }
     } catch (e) {
-      console.log('代理下载失败，尝试下一个')
+      console.log('代理下载失败:', e)
     }
   }
 
-  throw new Error('音频下载失败，请尝试手动下载后上传')
+  throw new Error('音频下载失败。B站有防盗链限制，请使用下方的"上传文件"功能：先用第三方工具下载视频，再上传进行语音识别。')
 }
 
 // 将Blob上传到临时文件托管服务

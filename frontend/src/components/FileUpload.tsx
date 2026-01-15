@@ -14,6 +14,7 @@ export default function FileUpload() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'done' | 'error'>('idle')
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
+  const [showGuide, setShowGuide] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { apiKey, setCurrentResult, addHistory } = useStore()
@@ -41,7 +42,7 @@ export default function FileUpload() {
     setError('')
 
     if (!isSupportedAudioFormat(selectedFile)) {
-      setError('不支持的文件格式，请上传 MP3、WAV、M4A、MP4 等格式')
+      setError('不支持的文件格式，请上传 MP3、WAV、M4A、MP4 等音视频格式')
       return
     }
 
@@ -73,25 +74,17 @@ export default function FileUpload() {
     setError('')
 
     try {
-      // 由于阿里云API需要公开URL，我们需要先上传文件
-      // 这里使用一个临时方案：将文件转为base64，但这只适用于小文件
-      // 对于大文件，需要先上传到OSS
-
-      // 检查文件大小，如果太大则提示
       if (file.size > 25 * 1024 * 1024) {
-        setError('文件过大（>25MB），请使用较短的音频文件，或联系管理员配置OSS存储')
+        setError('文件过大（>25MB），请使用较短的音频文件')
         setStatus('error')
         return
       }
 
       setProgress('正在上传文件...')
 
-      // 使用免费的文件托管服务（临时方案）
-      // 实际生产中应该使用OSS
       const formData = new FormData()
       formData.append('file', file)
 
-      // 尝试使用 file.io 临时托管
       const uploadResponse = await fetch('https://file.io', {
         method: 'POST',
         body: formData,
@@ -107,11 +100,9 @@ export default function FileUpload() {
       setProgress('文件上传成功，开始语音识别...')
       setStatus('processing')
 
-      // 提交语音识别任务
       const taskId = await submitTranscriptionTask(fileUrl, apiKey)
       setProgress('任务已提交，正在识别中...')
 
-      // 等待识别完成
       const result = await waitForTranscription(taskId, apiKey, (taskStatus) => {
         if (taskStatus === 'PENDING') {
           setProgress('排队中...')
@@ -123,7 +114,6 @@ export default function FileUpload() {
       setStatus('done')
       setProgress('识别完成！')
 
-      // 保存结果
       const extractResult = {
         id: generateId(),
         platform: 'upload',
@@ -139,7 +129,6 @@ export default function FileUpload() {
       setCurrentResult(extractResult)
       addHistory(extractResult)
 
-      // 重置状态
       setTimeout(() => {
         setFile(null)
         setStatus('idle')
@@ -166,9 +155,63 @@ export default function FileUpload() {
       transition={{ delay: 0.4 }}
       className="max-w-2xl mx-auto px-4 mt-8"
     >
-      <div className="text-center mb-4">
+      {/* 标题和帮助按钮 */}
+      <div className="flex items-center justify-center gap-2 mb-4">
         <h3 className="text-sm font-medium text-gray-400">或者上传音频/视频文件</h3>
+        <button
+          onClick={() => setShowGuide(!showGuide)}
+          className="text-cyber-accent hover:text-cyber-accent/80 transition-colors"
+          title="如何获取视频音频？"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
       </div>
+
+      {/* 下载指南 */}
+      <AnimatePresence>
+        {showGuide && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-4 p-4 bg-cyber-muted/50 rounded-lg border border-cyber-border"
+          >
+            <h4 className="text-sm font-medium text-cyber-accent mb-3">如何获取视频音频？</h4>
+            <div className="space-y-3 text-xs text-gray-400">
+              <div>
+                <p className="font-medium text-white mb-1">方法1：使用在线工具</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>访问 <span className="text-cyber-accent">bilibili.iiilab.com</span> 下载B站视频</li>
+                  <li>访问 <span className="text-cyber-accent">y2mate.com</span> 下载YouTube视频</li>
+                  <li>下载后上传MP4文件即可</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-white mb-1">方法2：使用浏览器插件</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>安装 "Video DownloadHelper" 插件</li>
+                  <li>播放视频时点击插件下载</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-white mb-1">方法3：录制音频</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>使用手机录音功能录制视频声音</li>
+                  <li>或使用电脑录音软件（如Audacity）</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowGuide(false)}
+              className="mt-3 text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              收起
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 上传区域 */}
       <div
@@ -187,7 +230,7 @@ export default function FileUpload() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.webm,.ogg,.flac"
+          accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.webm,.ogg,.flac,.mkv,.mov"
           onChange={handleInputChange}
           className="hidden"
         />
@@ -217,7 +260,7 @@ export default function FileUpload() {
                 拖拽文件到这里，或点击选择文件
               </p>
               <p className="text-gray-600 text-xs mt-2">
-                支持 MP3、WAV、M4A、MP4 等格式，最大 25MB
+                支持 MP3、WAV、M4A、MP4、MKV 等格式，最大 25MB
               </p>
             </motion.div>
           ) : (
@@ -252,10 +295,9 @@ export default function FileUpload() {
                 </div>
               </div>
 
-              {/* 进度显示 */}
               {status !== 'idle' && (
                 <div className="text-center">
-                  {status === 'processing' && (
+                  {(status === 'uploading' || status === 'processing') && (
                     <div className="flex items-center justify-center gap-2 text-cyber-accent">
                       <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
                         <circle
@@ -287,7 +329,6 @@ export default function FileUpload() {
                 </div>
               )}
 
-              {/* 操作按钮 */}
               {status === 'idle' && (
                 <div className="flex justify-center gap-3">
                   <button

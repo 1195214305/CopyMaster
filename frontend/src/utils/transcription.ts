@@ -144,11 +144,19 @@ export function isSupportedAudioFormat(file: File): boolean {
     'audio/flac',
     'audio/m4a',
     'audio/aac',
+    'audio/x-m4a',
+    'audio/mp4',
     'video/mp4',
     'video/webm',
+    'video/x-matroska',
+    'video/quicktime',
+    'application/octet-stream', // 允许未知类型，靠扩展名判断
   ]
-  return supportedTypes.includes(file.type) ||
-         file.name.match(/\.(wav|mp3|ogg|flac|m4a|aac|mp4|webm)$/i) !== null
+
+  // 支持的扩展名
+  const supportedExtensions = /\.(wav|mp3|ogg|flac|m4a|aac|mp4|webm|mkv|mov|m4s|ts|flv)$/i
+
+  return supportedTypes.includes(file.type) || supportedExtensions.test(file.name)
 }
 
 // 格式化时间（毫秒转为 mm:ss 格式）
