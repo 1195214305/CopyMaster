@@ -85,18 +85,67 @@ export default function FileUpload() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const uploadResponse = await fetch('https://file.io', {
-        method: 'POST',
-        body: formData,
-      })
+      // 尝试多个文件托管服务
+      let fileUrl = ''
 
-      const uploadData = await uploadResponse.json()
-
-      if (!uploadData.success || !uploadData.link) {
-        throw new Error('文件上传失败，请稍后重试')
+      // 方案1: 0x0.st (支持CORS)
+      try {
+        const response = await fetch('https://0x0.st', {
+          method: 'POST',
+          body: formData,
+        })
+        if (response.ok) {
+          fileUrl = await response.text()
+          fileUrl = fileUrl.trim()
+        }
+      } catch (e) {
+        console.log('0x0.st 上传失败')
       }
 
-      const fileUrl = uploadData.link
+      // 方案2: litterbox (临时文件托管)
+      if (!fileUrl) {
+        try {
+          const litterboxForm = new FormData()
+          litterboxForm.append('reqtype', 'fileupload')
+          litterboxForm.append('time', '24h')
+          litterboxForm.append('fileToUpload', file)
+
+          const response = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+            method: 'POST',
+            body: litterboxForm,
+          })
+          if (response.ok) {
+            fileUrl = await response.text()
+            fileUrl = fileUrl.trim()
+          }
+        } catch (e) {
+          console.log('litterbox 上传失败')
+        }
+      }
+
+      // 方案3: catbox
+      if (!fileUrl) {
+        try {
+          const catboxForm = new FormData()
+          catboxForm.append('reqtype', 'fileupload')
+          catboxForm.append('fileToUpload', file)
+
+          const response = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: catboxForm,
+          })
+          if (response.ok) {
+            fileUrl = await response.text()
+            fileUrl = fileUrl.trim()
+          }
+        } catch (e) {
+          console.log('catbox 上传失败')
+        }
+      }
+
+      if (!fileUrl) {
+        throw new Error('文件上传失败，所有托管服务都不可用，请稍后重试')
+      }
       setProgress('文件上传成功，开始语音识别...')
       setStatus('processing')
 

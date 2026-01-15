@@ -90,22 +90,71 @@ export async function downloadAudioViaProxy(audioUrl: string): Promise<Blob> {
 
 // 将Blob上传到临时文件托管服务
 export async function uploadToTempStorage(blob: Blob, filename: string): Promise<string> {
-  const formData = new FormData()
-  formData.append('file', blob, filename)
+  // 尝试多个文件托管服务
+  let fileUrl = ''
 
-  // 使用 file.io 临时托管（文件下载后自动删除）
-  const response = await fetch('https://file.io', {
-    method: 'POST',
-    body: formData,
-  })
+  // 方案1: 0x0.st (支持CORS)
+  try {
+    const formData = new FormData()
+    formData.append('file', blob, filename)
+    const response = await fetch('https://0x0.st', {
+      method: 'POST',
+      body: formData,
+    })
+    if (response.ok) {
+      fileUrl = await response.text()
+      fileUrl = fileUrl.trim()
+    }
+  } catch (e) {
+    console.log('0x0.st 上传失败')
+  }
 
-  const data = await response.json()
+  // 方案2: litterbox
+  if (!fileUrl) {
+    try {
+      const formData = new FormData()
+      formData.append('reqtype', 'fileupload')
+      formData.append('time', '24h')
+      formData.append('fileToUpload', blob, filename)
 
-  if (!data.success || !data.link) {
+      const response = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: formData,
+      })
+      if (response.ok) {
+        fileUrl = await response.text()
+        fileUrl = fileUrl.trim()
+      }
+    } catch (e) {
+      console.log('litterbox 上传失败')
+    }
+  }
+
+  // 方案3: catbox
+  if (!fileUrl) {
+    try {
+      const formData = new FormData()
+      formData.append('reqtype', 'fileupload')
+      formData.append('fileToUpload', blob, filename)
+
+      const response = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: formData,
+      })
+      if (response.ok) {
+        fileUrl = await response.text()
+        fileUrl = fileUrl.trim()
+      }
+    } catch (e) {
+      console.log('catbox 上传失败')
+    }
+  }
+
+  if (!fileUrl) {
     throw new Error('文件上传失败')
   }
 
-  return data.link
+  return fileUrl
 }
 
 // 完整的B站视频语音识别流程
